@@ -129,7 +129,7 @@ const LandingPage = () => {
                 <h3 className="font-bold mb-2 text-yellow-300">Game Flow</h3>
                 <div className="space-y-2 text-gray-100">
                   <p>1. Place your ante bet</p>
-                  <p>2. Receive your ante card and view the dealer's up card</p>
+                  <p>2. Receive your ante card and view the dealer&apos;s up card</p>
                   <p>3. Make decisions for up to 4 additional spots:</p>
                   <ul className="list-disc pl-8 text-sm space-y-1 text-gray-200">
                     <li>Face-Up: See your card immediately (1:1 payout)</li>

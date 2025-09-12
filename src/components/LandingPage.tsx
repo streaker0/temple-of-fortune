@@ -1,8 +1,14 @@
+// /src/components/LandingPage.tsx
 import React, { useState } from 'react';
-import { Play, Info, User, X } from 'lucide-react';
+import { Play, X } from 'lucide-react';
 
-const LandingPage = () => {
+interface LandingPageProps {
+  onPlayNow: () => void;
+}
+
+const LandingPage: React.FC<LandingPageProps> = ({ onPlayNow }) => {
   const [isRulesOpen, setIsRulesOpen] = useState(false);
+  
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-900 via-green-900 to-green-800 flex flex-col">
       {/* Header */}
@@ -14,8 +20,9 @@ const LandingPage = () => {
           
           <nav className="flex items-center space-x-6">
             <button
-            onClick={() => setIsRulesOpen(true)} 
-            className="bg-yellow-600 text-amber-900 px-4 py-2 rounded-full font-semibold hover:bg-yellow-500 transition-colors flex items-center space-x-2">
+              onClick={() => setIsRulesOpen(true)} 
+              className="bg-yellow-600 text-amber-900 px-4 py-2 rounded-full font-semibold hover:bg-yellow-500 transition-colors flex items-center space-x-2"
+            >
               <span>How to Play</span>
             </button>
           </nav>
@@ -41,7 +48,10 @@ const LandingPage = () => {
             </div>
 
             <div className="flex space-x-4">
-              <button className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 shadow-lg">
+              <button 
+                onClick={onPlayNow}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg font-semibold transition-colors flex items-center space-x-2 shadow-lg"
+              >
                 <Play size={20} />
                 <span>Play Now</span>
               </button>
@@ -50,7 +60,6 @@ const LandingPage = () => {
 
           {/* Right Content - Game Visual */}
           <div className="relative">
-            {/* Temple Background Circle */}
             <div className="w-80 h-80 mx-auto relative">
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-full shadow-2xl"></div>
               <div className="absolute inset-2 bg-gradient-to-br from-amber-600 to-amber-800 rounded-full shadow-inner"></div>

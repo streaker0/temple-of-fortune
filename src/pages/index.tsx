@@ -1,8 +1,9 @@
 // /src/pages/index.tsx
-import { Geist, Geist_Mono } from "next/font/google";
+import { Amarante, Geist, Geist_Mono } from "next/font/google";
 import { useState } from "react";
 import LandingPage from "../components/LandingPage";
 import BettingPage from "../components/BettingPage";
+import GameplayPage from "@/components/GameplayPage";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,12 +15,16 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+interface GameStartData {
+  anteBet: number;
+  remainingBalance: number;
+}
+
 export default function Home() {
-  const [currentPage, setCurrentPage] = useState('landing'); // 'landing', 'betting', 'gameplay', 'results'
+  const [currentPage, setCurrentPage] = useState('landing');
   const [gameState, setGameState] = useState({
     balance: 5000,
     currentBet: 0,
-    // Add other game state as needed
   });
 
   const handlePlayNow = () => {
@@ -29,6 +34,16 @@ export default function Home() {
   const handleBackToLanding = () => {
     setCurrentPage('landing');
   };
+  const handleStartGame = (gameData: GameStartData) =>{
+    setGameState({
+      balance: gameData.remainingBalance,
+      currentBet: gameData.anteBet
+    });
+    setCurrentPage('gameplay');
+  }
+  const setNewBalance = (amount: number) =>{
+    setGameState({balance:amount, currentBet:0})
+  }
 
  
 
@@ -41,9 +56,19 @@ export default function Home() {
           <BettingPage 
             balance={gameState.balance}
             onBack={handleBackToLanding}
-            onStartGame={()=>{}}
+            onStartGame={handleStartGame}
           />
         );
+      case 'gameplay':
+        return(
+        <>
+        <GameplayPage
+        anteBet={gameState.currentBet}
+        balance={gameState.balance}
+        onBack={handleBackToLanding}
+        onGameComplete={setNewBalance}
+        />
+        </>)
 
       default:
         return <LandingPage onPlayNow={handlePlayNow} />;

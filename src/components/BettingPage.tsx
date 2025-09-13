@@ -75,8 +75,9 @@ const BettingPage: React.FC<BettingPageProps> = ({
 
       <div className="flex flex-col items-center px-4 py-6 max-w-5xl mx-auto relative">
         {/* Current Wager and Balance - Bottom Left */}
-        <div className="absolute bottom-20 left-4 bg-amber-900/90 border-2 border-yellow-500 rounded-lg p-4">
+        <div className="absolute bottom-20 left-4 bg-amber-900/90 border-2 border-yellow-500 rounded-lg p-4 min-w-48">
           <div className="text-yellow-300 text-lg font-bold mb-2">Current Wager: ${currentBet}</div>
+          <div className="h-px bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-500 mb-2"></div>
           <div className="text-yellow-100 text-md">Balance: ${balance}</div>
         </div>
 
@@ -84,19 +85,19 @@ const BettingPage: React.FC<BettingPageProps> = ({
         <div className="bg-gradient-to-r from-amber-900/90 to-amber-800/90 border-2 border-yellow-500 rounded-lg p-6 mb-8 max-w-2xl w-full">
           <h2 className="text-yellow-300 text-xl font-bold mb-3 text-center">Welcome to Temple of Fortune</h2>
           <p className="text-yellow-100 text-sm mb-4 text-center leading-relaxed">
-            Test your luck and strategy in this thrilling card game. Place your ante bet and 
-            decide whether to play each card face-up or face-down. Face-up cards cost less 
-            but reveal your hand, while face-down cards cost more but keep your strategy secret.
+            Get closer to 20 than the dealer without going over. Choose face-up cards to see your hand 
+            immediately (1:1 payout) or face-down cards for higher mystery and bigger rewards (2:1 payout). 
+            Your ante card is always face-down for maximum payout potential.
           </p>
           
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-green-800/60 border border-green-500 rounded p-3 text-center">
               <div className="text-yellow-300 font-semibold text-sm mb-1">Face-Up Cards</div>
-              <div className="text-yellow-100 text-xs">Lower cost, visible to all players</div>
+              <div className="text-yellow-100 text-xs">See immediately, pays 1:1</div>
             </div>
             <div className="bg-amber-800/60 border border-amber-500 rounded p-3 text-center">
               <div className="text-yellow-300 font-semibold text-sm mb-1">Face-Down Cards</div>
-              <div className="text-yellow-100 text-xs">Higher cost, hidden from opponents</div>
+              <div className="text-yellow-100 text-xs">Mystery cards, pays 2:1</div>
             </div>
           </div>
         </div>
@@ -112,7 +113,7 @@ const BettingPage: React.FC<BettingPageProps> = ({
               {[1, 2].map((position) => (
                 <div key={position} className="flex flex-col items-center">
                   {/* Dealer card container with standard poker card dimensions */}
-                  <div className="w-16 h-22 bg-red-900/30 border-2 border-dashed border-red-400/50 rounded-lg flex items-center justify-center">
+                  <div className="w-32 h-[196px] bg-red-900/30 border-2 border-dashed border-red-400/50 rounded-lg flex items-center justify-center">
                     <div className="text-red-400/50 text-xs text-center">
                       Dealer<br/>Card
                     </div>
@@ -129,24 +130,24 @@ const BettingPage: React.FC<BettingPageProps> = ({
           <div className="flex items-end justify-center space-x-8 mb-12">
             {/* Ante Section - Elevated and to the left */}
             <div className="flex flex-col items-center mb-8">
-              {/* Ante card slot */}
-              <div className="w-20 h-28 bg-amber-700/30 border-2 border-dashed border-yellow-400/50 rounded-lg mb-3 flex items-center justify-center">
+              {/* Ante card slot - Standard playing card dimensions */}
+              <div className="w-32 h-[196px] bg-amber-700/30 border-2 border-dashed border-yellow-400/50 rounded-lg mb-3 flex items-center justify-center">
                 <div className="text-yellow-400/50 text-xs text-center">
                   Ante<br/>Card
                 </div>
               </div>
-              {/* Clickable betting circle for ante */}
+              {/* Clickable betting circle for ante - Same size as other circles */}
               <button
                 onClick={handleBetClick}
                 disabled={balance < selectedChip}
-                className={`w-16 h-16 rounded-full font-bold text-xs border-3 transition-all shadow-lg mb-2 flex flex-col items-center justify-center ${
+                className={`w-12 h-12 rounded-full font-bold text-xs border-3 transition-all shadow-lg mb-2 flex flex-col items-center justify-center ${
                   balance >= selectedChip
                     ? 'bg-gradient-to-b from-yellow-400 to-yellow-500 border-yellow-300 text-amber-900 hover:scale-105 cursor-pointer'
                     : 'bg-gray-600 border-gray-500 text-gray-300 cursor-not-allowed'
                 }`}
               >
-                <div className="text-xs font-bold">ANTE</div>
-                <div className="text-sm font-bold">${currentBet}</div>
+                <div className="text-xs font-bold leading-tight">ANTE</div>
+                <div className="text-xs font-bold">${currentBet}</div>
               </button>
               <div className="text-yellow-300 text-xs font-semibold">Click to Bet</div>
             </div>
@@ -156,7 +157,7 @@ const BettingPage: React.FC<BettingPageProps> = ({
               {[1, 2, 3, 4].map((position) => (
                 <div key={position} className="flex flex-col items-center">
                   {/* Card container with standard poker card dimensions - 5:7 aspect ratio */}
-                  <div className="w-16 h-22 bg-amber-700/30 border-2 border-dashed border-yellow-400/50 rounded-lg mb-3 flex items-center justify-center">
+                  <div className="w-32 h-[196px] bg-amber-700/30 border-2 border-dashed border-yellow-400/50 rounded-lg mb-3 flex items-center justify-center">
                     {/* This is where the actual card image will go */}
                     <div className="text-yellow-400/50 text-xs text-center">
                       Card<br/>Slot

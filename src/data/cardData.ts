@@ -1,5 +1,4 @@
 // /src/data/cardData.ts
-import { log } from 'console';
 import { Card, GameCard } from '../types/Card';
 
 export const SUITS = ['club', 'diamond', 'heart', 'spade'] as const;
@@ -37,7 +36,7 @@ export const createFaceDownCard = (id: string, betAmount: number): GameCard => {
     id,
     isFaceUp: false,
     card: null,
-    wasFaceDown:true,
+    wasFaceDown: true,
     betAmount
   };
 };
@@ -47,7 +46,7 @@ export const createFaceUpCard = (id: string, card: Card, betAmount: number): Gam
     id,
     isFaceUp: true,
     card,
-    wasFaceDown:false,
+    wasFaceDown: false,
     betAmount
   };
 };
@@ -99,15 +98,38 @@ export const flipCardUp = (gameCard: GameCard, deck: Card[]): {
   return { flippedCard, remainingDeck };
 };
 
+export const drawCard = (deck: Card[]): { card: Card; remainingDeck: Card[] } => {
+  if (deck.length === 0) {
+    throw new Error('Cannot draw from empty deck');
+  }
+  
+  const card = deck[0];
+  const remainingDeck = deck.slice(1);
+  
+  return { card, remainingDeck };
+};
+
 export type GamePhase = 
   | 'betting'           
-  | 'initial-deal'      
+  | 'initial-dealing'   
   | 'player-decisions' 
-  | 'dealer-turn' 
-  | 'reveal'
+  | 'dealer-turn'
+  | 'dealer-revealing'
+  | 'dealer-drawing'
+  | 'player-revealing'
   | 'payout'
   | 'finished';
 
+export interface DealingState {
+  currentCardIndex: number;  
+  isDealing: boolean;        
+}
+
+export interface RevealingState {
+  currentRevealIndex: number;
+  isRevealing: boolean;
+  revealType: 'dealer' | 'player' | null; 
+}
 
 export interface GameState {
   deck: Card[];                   
@@ -128,6 +150,9 @@ export interface GameState {
   finalDealerTotal: number;
   gameResult: 'win' | 'lose' | 'tie' | 'both-bust' | null;
   totalPayout: number;
+  
+  dealingState: DealingState;
+  revealingState: RevealingState;
 }
 
 export const createInitialGameState = (balance: number): GameState => {
@@ -137,7 +162,7 @@ export const createInitialGameState = (balance: number): GameState => {
     playerCards: [],
     anteCard: null,
     anteBet: 0,
-    currentWager:0,
+    currentWager: 0,
     balance,
     gamePhase: 'betting',
     currentDecision: 0,
@@ -146,40 +171,83 @@ export const createInitialGameState = (balance: number): GameState => {
     finalPlayerTotal: 0,
     finalDealerTotal: 0,
     gameResult: null,
-    totalPayout: 0
+    totalPayout: 0,
+    dealingState: {
+      currentCardIndex: 0,
+      isDealing: false
+    },
+    revealingState: {
+      currentRevealIndex: 0,
+      isRevealing: false,
+      revealType: null
+    }
   };
 };
 
-export const dealInitialCards = (gameState: GameState): GameState => {
-  let { deck } = gameState;
-  gameState.currentWager = gameState.anteBet;
+export const startInitialDealing = (gameState: GameState): GameState => {
+  return {
+    ...gameState,
+    gamePhase: 'initial-dealing',
+    currentWager: gameState.anteBet,
+    dealingState: {
+      currentCardIndex: 0,
+      isDealing: true
+    }
+  };
+};
+
+export const dealNextInitialCard = (gameState: GameState): GameState => {
+  if (gameState.gamePhase !== 'initial-dealing') {
+    throw new Error('Not in initial dealing phase');
+  }
+
+  const { currentCardIndex } = gameState.dealingState;
+  let { deck, dealerCards, anteCard, dealerTotal } = gameState;
   
-  const anteCard = createFaceDownCard('ante', gameState.anteBet);
-  const { card: dealerUpCard, remainingDeck: deck1 } = drawCard(deck);
-  const dealerCard1 = createFaceUpCard('dealer-1', dealerUpCard, 0);
+  if (currentCardIndex === 0) {
+    anteCard = createFaceDownCard('ante', gameState.anteBet);
+    
+  } else if (currentCardIndex === 1) {
+    const { card, remainingDeck } = drawCard(deck);
+    deck = remainingDeck;
+    const dealerCard = createFaceUpCard('dealer-1', card, 0);
+    dealerCards = [...dealerCards, dealerCard];
+    dealerTotal += card.value;
+    
+  } else if (currentCardIndex === 2) {
+    const dealerCard = createFaceDownCard('dealer-2', 0);
+    dealerCards = [...dealerCards, dealerCard];
+  }
   
-  const dealerCard2 = createFaceDownCard('dealer-2', 0);
+  const nextIndex = currentCardIndex + 1;
+  const isLastInitialCard = nextIndex >= 3;
   
   return {
     ...gameState,
-    deck: deck1,
+    deck,
+    dealerCards,
     anteCard,
-    dealerCards: [dealerCard1, dealerCard2],
-    dealerTotal: dealerUpCard.value,
-    gamePhase: 'player-decisions'
+    dealerTotal,
+    dealingState: {
+      currentCardIndex: nextIndex,
+      isDealing: !isLastInitialCard
+    },
+    gamePhase: isLastInitialCard ? 'player-decisions' : 'initial-dealing'
   };
 };
 
-export const drawCard = (deck: Card[]): { card: Card; remainingDeck: Card[] } => {
-  if (deck.length === 0) {
-    throw new Error('Cannot draw from empty deck');
+export const isCurrentlyDealingCard = (gameState: GameState, cardType: 'ante' | 'dealer1' | 'dealer2'): boolean => {
+  if (gameState.gamePhase !== 'initial-dealing') return false;
+  
+  const index = gameState.dealingState.currentCardIndex;
+  switch (cardType) {
+    case 'ante': return index === 0;
+    case 'dealer1': return index === 1;
+    case 'dealer2': return index === 2;
+    default: return false;
   }
-  
-  const card = deck[0];
-  const remainingDeck = deck.slice(1);
-  
-  return { card, remainingDeck };
 };
+
 
 export const makePlayerDecision = (
   gameState: GameState, 
@@ -192,8 +260,6 @@ export const makePlayerDecision = (
   if (gameState.currentDecision >= 4) {
     throw new Error('All decisions have been made');
   }
-  console.log("Game state : ", choice, gameState);
-  
   
   const position = gameState.currentDecision;
   const cardId = `player-${position + 1}`;
@@ -201,8 +267,8 @@ export const makePlayerDecision = (
   let newCard: GameCard;
   let newDeck = gameState.deck;
   let newPlayerTotal = gameState.playerTotal;
-  gameState.balance -= gameState.anteBet;
-  gameState.currentWager += gameState.anteBet;
+  let newBalance = gameState.balance - gameState.anteBet;
+  let newWager = gameState.currentWager + gameState.anteBet;
   
   if (choice === 'face-up') {
     const { card, remainingDeck } = drawCard(gameState.deck);
@@ -215,9 +281,6 @@ export const makePlayerDecision = (
   
   const newPlayerCards = [...gameState.playerCards];
   newPlayerCards[position] = newCard;
-
-  console.log("Game state after card is drawn :", gameState);
-  
   
   return {
     ...gameState,
@@ -225,20 +288,37 @@ export const makePlayerDecision = (
     playerCards: newPlayerCards,
     currentDecision: gameState.currentDecision + 1,
     playerTotal: newPlayerTotal,
-    gamePhase: gameState.currentDecision === 3 ? 'dealer-turn' : 'player-decisions'
+    balance: newBalance,
+    currentWager: newWager,
+    gamePhase: gameState.currentDecision === 3 ? 'dealer-revealing' : 'player-decisions'
   };
 };
 
 export const playerStand = (gameState: GameState): GameState => {
   return {
     ...gameState,
-    gamePhase: 'dealer-turn'
+    gamePhase: 'dealer-revealing'
   };
 };
 
-export const completeDealerTurn = (gameState: GameState): GameState => {
-  if (gameState.gamePhase !== 'dealer-turn') {
-    throw new Error('Not in dealer turn phase');
+export const startDealerReveal = (gameState: GameState): GameState => {
+  if (gameState.gamePhase !== 'dealer-revealing') {
+    throw new Error('Not in dealer revealing phase');
+  }
+  
+  return {
+    ...gameState,
+    revealingState: {
+      currentRevealIndex: 0,
+      isRevealing: true,
+      revealType: 'dealer'
+    }
+  };
+};
+
+export const revealDealerCard = (gameState: GameState): GameState => {
+  if (gameState.gamePhase !== 'dealer-revealing') {
+    throw new Error('Not in dealer revealing phase');
   }
   
   let { deck, dealerCards, dealerTotal } = gameState;
@@ -250,49 +330,141 @@ export const completeDealerTurn = (gameState: GameState): GameState => {
     dealerTotal += flippedCard.card!.value;
   }
   
-  while (dealerTotal < 15) {
-    const { card, remainingDeck } = drawCard(deck);
-    const newDealerCard = createFaceUpCard(`dealer-${dealerCards.length + 1}`, card, 0);
-    dealerCards = [...dealerCards, newDealerCard];
-    deck = remainingDeck;
-    dealerTotal += card.value;
-  }
-  
   return {
     ...gameState,
     deck,
     dealerCards,
     dealerTotal,
-    gamePhase: 'reveal'
+    gamePhase: 'dealer-drawing',
+    revealingState: {
+      ...gameState.revealingState,
+      isRevealing: false
+    }
   };
 };
 
-export const revealAndCalculate = (gameState: GameState): GameState => {
-  if (gameState.gamePhase !== 'reveal') {
-    throw new Error('Not in reveal phase');
+export const shouldDealerDraw = (gameState: GameState): boolean => {
+  if (gameState.dealerCards.length >= 10) {
+    console.warn('Dealer has too many cards, stopping draw to prevent infinite loop');
+    return false;
+  }
+  
+  return gameState.dealerTotal < 15;
+};
+
+export const dealerDrawCard = (gameState: GameState): GameState => {
+  if (gameState.gamePhase !== 'dealer-drawing') {
+    throw new Error('Not in dealer drawing phase');
+  }
+    if (gameState.dealerCards.length >= 10) {
+    throw new Error('Dealer has too many cards');
+  }
+  
+  let { deck, dealerCards, dealerTotal } = gameState;
+  
+  const { card, remainingDeck } = drawCard(deck);
+  const newDealerCard = createFaceUpCard(`dealer-${dealerCards.length + 1}`, card, 0);
+  dealerCards = [...dealerCards, newDealerCard];
+  deck = remainingDeck;
+  dealerTotal += card.value;
+    
+  return {
+    ...gameState,
+    deck,
+    dealerCards,
+    dealerTotal
+  };
+};
+
+export const completeDealerDrawing = (gameState: GameState): GameState => {
+  return {
+    ...gameState,
+    finalPlayerTotal: gameState.playerTotal,
+    gamePhase: 'player-revealing',
+    revealingState: {
+      currentRevealIndex: 0,
+      isRevealing: true,
+      revealType: 'player'
+    }
+  };
+};
+
+export const getNextPlayerCardToReveal = (gameState: GameState): { cardIndex: number; cardType: 'ante' | 'player' } | null => {
+  
+  if (gameState.anteCard && !gameState.anteCard.isFaceUp) {
+    console.log('Next to reveal: ante');
+    return { cardIndex: -1, cardType: 'ante' };
+  }
+  
+  for (let i = 0; i < gameState.playerCards.length; i++) {
+    const card = gameState.playerCards[i];
+    if (card && !card.isFaceUp) {
+      console.log(`Next to reveal: player-${i + 1}`);
+      return { cardIndex: i, cardType: 'player' };
+    }
+  }
+  
+  console.log('No more cards to reveal');
+  return null;
+};
+
+export const revealNextPlayerCard = (gameState: GameState): GameState => {
+  if (gameState.gamePhase !== 'player-revealing') {
+    throw new Error('Not in player revealing phase');
+  }
+  
+  const nextCard = getNextPlayerCardToReveal(gameState);
+  if (!nextCard) {
+    throw new Error('No more cards to reveal');
   }
   
   let { deck, anteCard, playerCards } = gameState;
-  let finalPlayerTotal = gameState.playerTotal;
+  let finalPlayerTotal = gameState.finalPlayerTotal;
   
-  if (anteCard && !anteCard.isFaceUp) {
+  if (nextCard.cardType === 'ante' && anteCard && !anteCard.isFaceUp) {
     const { flippedCard, remainingDeck } = flipCardUp(anteCard, deck);
     anteCard = flippedCard;
     deck = remainingDeck;
     finalPlayerTotal += flippedCard.card!.value;
-  }
-  
-  for (let i = 0; i < playerCards.length; i++) {
-    const playerCard = playerCards[i];
+    console.log(`Revealed ante card: ${flippedCard.card!.rank} of ${flippedCard.card!.suit} (value: ${flippedCard.card!.value})`);
+  } else if (nextCard.cardType === 'player') {
+    const playerCard = playerCards[nextCard.cardIndex];
     if (playerCard && !playerCard.isFaceUp) {
       const { flippedCard, remainingDeck } = flipCardUp(playerCard, deck);
-      playerCards[i] = flippedCard;
+      playerCards[nextCard.cardIndex] = flippedCard;
       deck = remainingDeck;
       finalPlayerTotal += flippedCard.card!.value;
+      console.log(`Revealed player card ${nextCard.cardIndex + 1}: ${flippedCard.card!.rank} of ${flippedCard.card!.suit} (value: ${flippedCard.card!.value})`);
     }
   }
   
+  const newRevealIndex = gameState.revealingState.currentRevealIndex + 1;
+  
+  const updatedGameState = {
+    ...gameState,
+    deck,
+    anteCard,
+    playerCards,
+    finalPlayerTotal,
+    revealingState: { ...gameState.revealingState, currentRevealIndex: newRevealIndex }
+  };
+  
+  const hasMoreToReveal = getNextPlayerCardToReveal(updatedGameState) !== null;
+  
+  return {
+    ...updatedGameState,
+    revealingState: {
+      ...updatedGameState.revealingState,
+      isRevealing: hasMoreToReveal
+    },
+    gamePhase: hasMoreToReveal ? 'player-revealing' : 'payout'
+  };
+};
+
+// NEW: Calculate final results after all reveals
+export const calculateFinalResults = (gameState: GameState): GameState => {
   const finalDealerTotal = gameState.dealerTotal;
+  const finalPlayerTotal = gameState.finalPlayerTotal;
   const playerBust = finalPlayerTotal > 20;
   const dealerBust = finalDealerTotal > 20;
   
@@ -307,7 +479,7 @@ export const revealAndCalculate = (gameState: GameState): GameState => {
     totalPayout = 0;
   } else if (dealerBust || finalPlayerTotal > finalDealerTotal) {
     gameResult = 'win';
-    totalPayout = calculateWinnings(gameState, anteCard, playerCards);
+    totalPayout = calculateWinnings(gameState, gameState.anteCard, gameState.playerCards);
   } else if (finalPlayerTotal === finalDealerTotal) {
     gameResult = 'tie';
     totalPayout = gameState.currentWager;
@@ -318,27 +490,11 @@ export const revealAndCalculate = (gameState: GameState): GameState => {
   
   return {
     ...gameState,
-    deck,
-    anteCard,
-    playerCards,
-    finalPlayerTotal,
     finalDealerTotal,
     gameResult,
     totalPayout,
     gamePhase: 'payout'
   };
-};
-
-export const calculateTotalBets = (gameState: GameState): number => {
-  let total = gameState.anteBet;
-  
-  gameState.playerCards.forEach(card => {
-    if (card) {
-      total += card.betAmount;
-    }
-  });
-  
-  return total;
 };
 
 export const calculateWinnings = (
@@ -349,15 +505,15 @@ export const calculateWinnings = (
   let totalWinnings = 0;
   
   if (anteCard) {
-    totalWinnings += anteCard.betAmount * 2;
+    totalWinnings += anteCard.betAmount * 3;
   }
   
   playerCards.forEach(card => {
     if (card) {
       if (!card.wasFaceDown) {
-        totalWinnings += card.betAmount * 1;
-      } else {
         totalWinnings += card.betAmount * 2;
+      } else {
+        totalWinnings += card.betAmount * 3;
       }
     }
   });
@@ -365,29 +521,7 @@ export const calculateWinnings = (
   return totalWinnings;
 };
 
-export const calculateCurrentTotals = (gameState: GameState): {
-  playerTotal: number;
-  dealerTotal: number;
-} => {
-  const playerTotal = gameState.playerCards.reduce((total, card) => {
-    return total + getCardValue(card);
-  }, 0);
-  
-  const dealerTotal = gameState.dealerCards.reduce((total, card) => {
-    return total + getCardValue(card);
-  }, 0);
-  
-  return { playerTotal, dealerTotal };
-};
-
 export const isPlayerBusted = (gameState: GameState): boolean => {
   return gameState.playerTotal > 20;
 };
 
-export const areAllDecisionsMade = (gameState: GameState): boolean => {
-  return gameState.currentDecision >= 4;
-};
-
-export const getPayoutMultiplier = (gameCard: GameCard): number => {
-  return gameCard.isFaceUp ? 1 : 2;
-};

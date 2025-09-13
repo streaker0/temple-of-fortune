@@ -21,11 +21,11 @@ interface GameStartData {
 }
 
 export default function Home() {
-  const [currentPage, setCurrentPage] = useState('landing'); // 'landing', 'betting', 'gameplay'
+  const [currentPage, setCurrentPage] = useState('landing');
   const [gameState, setGameState] = useState({
-    balance: 500,
+    balance: 5000,
     currentBet: 0,
-    previousAnte: 0, // Track the previous ante bet for rebetting
+    previousAnte: 0,
   });
 
   const handlePlayNow = () => {
@@ -41,7 +41,7 @@ export default function Home() {
       ...prev,
       balance: gameData.remainingBalance,
       currentBet: gameData.anteBet,
-      previousAnte: gameData.anteBet // Store the ante for next game
+      previousAnte: gameData.anteBet
     }));
     setCurrentPage('gameplay');
   };
@@ -50,9 +50,9 @@ export default function Home() {
     setGameState({
       balance: newBalance,
       currentBet: 0,
-      previousAnte: previousAnte // Keep the previous ante for rebetting
+      previousAnte: previousAnte
     });
-    setCurrentPage('betting'); // Go back to betting page
+    setCurrentPage('betting');
   };
 
   const renderCurrentPage = () => {

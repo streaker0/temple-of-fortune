@@ -54,7 +54,7 @@ const GameResult: React.FC<GameResultProps> = ({
       case 'win':
         return `$${totalPayout} Won`;
       case 'lose':
-        return ''; // Don't show anything for losses
+        return '';
       default:
         return '';
     }
@@ -67,12 +67,9 @@ const GameResult: React.FC<GameResultProps> = ({
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-gradient-to-b from-amber-800 to-amber-900 border-4 border-yellow-500 rounded-2xl p-8 max-w-md w-full mx-4 shadow-2xl">
-        {/* Result Title */}
         <div className={`text-2xl font-bold text-center mb-6 ${getResultColor()}`}>
           {getResultTitle()}
         </div>
-
-        {/* Payout Display - Only show for non-loss outcomes */}
         {shouldShowPayout() && (
           <div className="bg-amber-700/50 border-2 border-yellow-400 rounded-lg p-6 mb-6 text-center">
             <div className={`text-4xl font-bold ${getResultColor()}`}>
@@ -80,15 +77,11 @@ const GameResult: React.FC<GameResultProps> = ({
             </div>
           </div>
         )}
-
-        {/* New Balance */}
         <div className="text-center mb-6">
           <div className="text-yellow-300 text-lg">
             New Balance: <span className="font-bold text-yellow-100">${newBalance + totalPayout}</span>
           </div>
         </div>
-
-        {/* New Game Button */}
         <div className="text-center">
           <button
             onClick={onNewGame}

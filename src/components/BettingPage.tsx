@@ -1,5 +1,6 @@
 // /src/components/BettingPage.tsx
 import React, { useState } from 'react';
+import RulesModal from './RulesModal';
 
 interface GameStartData {
   anteBet: number;
@@ -22,6 +23,7 @@ const BettingPage: React.FC<BettingPageProps> = ({
   const [balance, setBalance] = useState(initialBalance);
   const [currentBet, setCurrentBet] = useState(0);
   const [selectedChip, setSelectedChip] = useState(5);
+  const [showRules, setShowRules] = useState(false);
 
   const chipValues = [5, 10, 25, 50, 100, 500, 1000];
 
@@ -43,6 +45,14 @@ const BettingPage: React.FC<BettingPageProps> = ({
     setCurrentBet(0);
   };
 
+  const handleRebet = () => {
+    if (previousAnte && balance >= previousAnte) {
+      const totalBalance = balance + currentBet;
+      setBalance(totalBalance - previousAnte);
+      setCurrentBet(previousAnte);
+    }
+  };
+
   const handleDealCards = () => {
     if (currentBet >= 5) {
       onStartGame({
@@ -53,6 +63,7 @@ const BettingPage: React.FC<BettingPageProps> = ({
   };
 
   const canDeal = currentBet >= 5;
+  const canRebet = previousAnte && balance + currentBet >= previousAnte;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-800 via-amber-700 to-amber-900">
@@ -71,22 +82,19 @@ const BettingPage: React.FC<BettingPageProps> = ({
           </div>
         </div>
       </header>
-
       <div className="flex flex-col items-center px-4 py-6 max-w-5xl mx-auto relative">
         <div className="absolute bottom-20 left-4 bg-amber-900/90 border-2 border-yellow-500 rounded-lg p-4 min-w-48">
           <div className="text-yellow-300 text-lg font-bold mb-2">Current Wager: ${currentBet}</div>
           <div className="h-px bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-500 mb-2"></div>
           <div className="text-yellow-100 text-md">Balance: ${balance}</div>
         </div>
-
         <div className="bg-gradient-to-r from-amber-900/90 to-amber-800/90 border-2 border-yellow-500 rounded-lg p-6 mb-8 max-w-2xl w-full">
           <h2 className="text-yellow-300 text-xl font-bold mb-3 text-center">Welcome to Temple of Fortune</h2>
           <p className="text-yellow-100 text-sm mb-4 text-center leading-relaxed">
             Get closer to 20 than the dealer without going over. Choose face-up cards to see your hand 
             immediately (1:1 payout) or face-down cards for higher mystery and bigger rewards (2:1 payout). 
             Your ante card is always face-down for maximum payout potential.
-          </p>
-          
+          </p>          
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-green-800/60 border border-green-500 rounded p-3 text-center">
               <div className="text-yellow-300 font-semibold text-sm mb-1">Face-Up Cards</div>
@@ -98,11 +106,9 @@ const BettingPage: React.FC<BettingPageProps> = ({
             </div>
           </div>
         </div>
-
         <div className="w-full max-w-4xl">
           <div className="text-center mb-12">
             <h3 className="text-yellow-300 text-xl font-bold mb-4">Dealer</h3>
-            
             <div className="flex justify-center space-x-6 mb-4">
               {[1, 2].map((position) => (
                 <div key={position} className="flex flex-col items-center">
@@ -118,7 +124,6 @@ const BettingPage: React.FC<BettingPageProps> = ({
             
             <div className="text-yellow-400">Waiting...</div>
           </div>
-
           <div className="flex items-end justify-center space-x-8 mb-12">
             <div className="flex flex-col items-center mb-8">
               <div className="w-32 h-[196px] bg-amber-700/30 border-2 border-dashed border-yellow-400/50 rounded-lg mb-3 flex items-center justify-center">
@@ -153,12 +158,10 @@ const BettingPage: React.FC<BettingPageProps> = ({
               ))}
             </div>
           </div>
-
           <div className="text-center mt-10">
             <div className="text-yellow-300 font-semibold text-lg">Place your ante bet to begin the game!</div>
           </div>
         </div>
-
         <div className="mt-12 flex flex-col items-center space-y-6">
           <div className="flex space-x-4">
             <button
@@ -183,7 +186,22 @@ const BettingPage: React.FC<BettingPageProps> = ({
             >
               Clear Bet
             </button>
-            <button className="bg-gradient-to-b from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:from-blue-400 hover:to-blue-500 shadow-lg">
+            {previousAnte && (
+              <button
+                onClick={handleRebet}
+                disabled={!canRebet}
+                className={`px-4 py-2 rounded-lg font-bold shadow-lg ${
+                  canRebet 
+                    ? 'bg-gradient-to-b from-purple-500 to-purple-600 text-white hover:from-purple-400 hover:to-purple-500' 
+                    : 'bg-gray-500 text-gray-300 cursor-not-allowed'
+                }`}
+              >
+                Rebet ${previousAnte}
+              </button>
+            )}
+            <button
+							onClick={() => setShowRules(true)} 
+              className="bg-gradient-to-b from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg font-bold hover:from-blue-400 hover:to-blue-500 shadow-lg">
               Rules
             </button>
           </div>
@@ -211,6 +229,10 @@ const BettingPage: React.FC<BettingPageProps> = ({
           </div>
         </div>
       </div>
+			<RulesModal 
+				isOpen={showRules} 
+				onClose={() => setShowRules(false)} 
+			/>
     </div>
   );
 };

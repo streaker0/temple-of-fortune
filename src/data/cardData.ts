@@ -267,8 +267,8 @@ export const makePlayerDecision = (
   let newCard: GameCard;
   let newDeck = gameState.deck;
   let newPlayerTotal = gameState.playerTotal;
-  let newBalance = gameState.balance - gameState.anteBet;
-  let newWager = gameState.currentWager + gameState.anteBet;
+  const newBalance = gameState.balance - gameState.anteBet;
+  const newWager = gameState.currentWager + gameState.anteBet;
   
   if (choice === 'face-up') {
     const { card, remainingDeck } = drawCard(gameState.deck);
@@ -418,8 +418,8 @@ export const revealNextPlayerCard = (gameState: GameState): GameState => {
     throw new Error('No more cards to reveal');
   }
   
-  let { deck, anteCard, playerCards } = gameState;
-  let finalPlayerTotal = gameState.finalPlayerTotal;
+  let { deck, anteCard, finalPlayerTotal} = gameState;
+  const playerCards = gameState.playerCards;
   
   if (nextCard.cardType === 'ante' && anteCard && !anteCard.isFaceUp) {
     const { flippedCard, remainingDeck } = flipCardUp(anteCard, deck);

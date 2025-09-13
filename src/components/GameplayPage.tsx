@@ -21,6 +21,7 @@ import {
   isPlayerBusted,
 } from '../data/cardData';
 import GameResult from './GameResult';
+import { GameCard } from '../types/Card';
 
 interface GameplayPageProps {
   anteBet: number;
@@ -166,7 +167,7 @@ const GameplayPage: React.FC<GameplayPageProps> = ({
     onGameComplete(newBalance, anteBet);
   };
 
-  const renderCard = (cardData: any, label: string, isBeingDealt?: boolean, isAnimating?: boolean, isBeingRevealed?: boolean) => {
+  const renderCard = (cardData: GameCard | null, label: string, isBeingDealt?: boolean, isAnimating?: boolean, isBeingRevealed?: boolean) => {
     if (!cardData) {
       return (
         <div className="flex flex-col items-center">

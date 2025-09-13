@@ -21,10 +21,11 @@ interface GameStartData {
 }
 
 export default function Home() {
-  const [currentPage, setCurrentPage] = useState('landing');
+  const [currentPage, setCurrentPage] = useState('landing'); // 'landing', 'betting', 'gameplay'
   const [gameState, setGameState] = useState({
-    balance: 5000,
+    balance: 500,
     currentBet: 0,
+    previousAnte: 0, // Track the previous ante bet for rebetting
   });
 
   const handlePlayNow = () => {
@@ -34,18 +35,25 @@ export default function Home() {
   const handleBackToLanding = () => {
     setCurrentPage('landing');
   };
-  const handleStartGame = (gameData: GameStartData) =>{
-    setGameState({
-      balance: gameData.remainingBalance,
-      currentBet: gameData.anteBet
-    });
-    setCurrentPage('gameplay');
-  }
-  const setNewBalance = (amount: number) =>{
-    setGameState({balance:amount, currentBet:0})
-  }
 
- 
+  const handleStartGame = (gameData: GameStartData) => {
+    setGameState(prev => ({
+      ...prev,
+      balance: gameData.remainingBalance,
+      currentBet: gameData.anteBet,
+      previousAnte: gameData.anteBet // Store the ante for next game
+    }));
+    setCurrentPage('gameplay');
+  };
+
+  const handleGameComplete = (newBalance: number, previousAnte: number) => {
+    setGameState({
+      balance: newBalance,
+      currentBet: 0,
+      previousAnte: previousAnte // Keep the previous ante for rebetting
+    });
+    setCurrentPage('betting'); // Go back to betting page
+  };
 
   const renderCurrentPage = () => {
     switch(currentPage) {
@@ -55,20 +63,20 @@ export default function Home() {
         return (
           <BettingPage 
             balance={gameState.balance}
+            previousAnte={gameState.previousAnte > 0 ? gameState.previousAnte : undefined}
             onBack={handleBackToLanding}
             onStartGame={handleStartGame}
           />
         );
       case 'gameplay':
-        return(
-        <>
-        <GameplayPage
-        anteBet={gameState.currentBet}
-        balance={gameState.balance}
-        onBack={handleBackToLanding}
-        onGameComplete={setNewBalance}
-        />
-        </>)
+        return (
+          <GameplayPage
+            anteBet={gameState.currentBet}
+            balance={gameState.balance}
+            onBack={handleBackToLanding}
+            onGameComplete={handleGameComplete}
+          />
+        );
 
       default:
         return <LandingPage onPlayNow={handlePlayNow} />;

@@ -1,6 +1,5 @@
 // /src/components/BettingPage.tsx
 import React, { useState } from 'react';
-import { ArrowLeft } from 'lucide-react';
 
 interface GameStartData {
   anteBet: number;
@@ -8,13 +7,15 @@ interface GameStartData {
 }
 
 interface BettingPageProps {
-  balance?: number;
+  balance: number;
+  previousAnte?: number;
   onBack: () => void;
   onStartGame: (gameData: GameStartData) => void;
 }
 
 const BettingPage: React.FC<BettingPageProps> = ({ 
   balance: initialBalance = 5000, 
+  previousAnte,
   onBack, 
   onStartGame 
 }) => {
@@ -22,7 +23,7 @@ const BettingPage: React.FC<BettingPageProps> = ({
   const [currentBet, setCurrentBet] = useState(0);
   const [selectedChip, setSelectedChip] = useState(5);
 
-  const chipValues = [5, 10, 25, 50, 100];
+  const chipValues = [5, 10, 25, 50, 100, 500, 1000];
 
   const handleChipSelect = (value: number) => {
     if (balance >= value) {
@@ -55,7 +56,6 @@ const BettingPage: React.FC<BettingPageProps> = ({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-800 via-amber-700 to-amber-900">
-      {/* Header */}
       <header className="bg-green-800 px-4 py-2">
         <div className="flex items-center justify-between text-yellow-300">
           <div className="flex items-center space-x-2">
@@ -63,25 +63,22 @@ const BettingPage: React.FC<BettingPageProps> = ({
             <span className="text-sm">Balance: ${balance}</span>
           </div>
           <div className="flex items-center space-x-2">
-            <button className="bg-red-600 text-white px-3 py-1 rounded text-sm">
-              Quit ($147)
-            </button>
-            <button className="bg-blue-600 text-white px-3 py-1 rounded text-sm">
-              New Game
+            <button 
+            onClick={onBack}
+            className="bg-blue-600 text-white px-3 py-1 rounded text-sm">
+              Home
             </button>
           </div>
         </div>
       </header>
 
       <div className="flex flex-col items-center px-4 py-6 max-w-5xl mx-auto relative">
-        {/* Current Wager and Balance - Bottom Left */}
         <div className="absolute bottom-20 left-4 bg-amber-900/90 border-2 border-yellow-500 rounded-lg p-4 min-w-48">
           <div className="text-yellow-300 text-lg font-bold mb-2">Current Wager: ${currentBet}</div>
           <div className="h-px bg-gradient-to-r from-yellow-500 via-yellow-400 to-yellow-500 mb-2"></div>
           <div className="text-yellow-100 text-md">Balance: ${balance}</div>
         </div>
 
-        {/* Welcome Box - Centered */}
         <div className="bg-gradient-to-r from-amber-900/90 to-amber-800/90 border-2 border-yellow-500 rounded-lg p-6 mb-8 max-w-2xl w-full">
           <h2 className="text-yellow-300 text-xl font-bold mb-3 text-center">Welcome to Temple of Fortune</h2>
           <p className="text-yellow-100 text-sm mb-4 text-center leading-relaxed">
@@ -102,17 +99,13 @@ const BettingPage: React.FC<BettingPageProps> = ({
           </div>
         </div>
 
-        {/* Main Game Area */}
         <div className="w-full max-w-4xl">
-          {/* Dealer Section */}
           <div className="text-center mb-12">
             <h3 className="text-yellow-300 text-xl font-bold mb-4">Dealer</h3>
             
-            {/* Dealer Cards Row */}
             <div className="flex justify-center space-x-6 mb-4">
               {[1, 2].map((position) => (
                 <div key={position} className="flex flex-col items-center">
-                  {/* Dealer card container with standard poker card dimensions */}
                   <div className="w-32 h-[196px] bg-red-900/30 border-2 border-dashed border-red-400/50 rounded-lg flex items-center justify-center">
                     <div className="text-red-400/50 text-xs text-center">
                       Dealer<br/>Card
@@ -126,17 +119,13 @@ const BettingPage: React.FC<BettingPageProps> = ({
             <div className="text-yellow-400">Waiting...</div>
           </div>
 
-          {/* Center Game Area - Horizontal layout with ante on left, elevated */}
           <div className="flex items-end justify-center space-x-8 mb-12">
-            {/* Ante Section - Elevated and to the left */}
             <div className="flex flex-col items-center mb-8">
-              {/* Ante card slot - Standard playing card dimensions */}
               <div className="w-32 h-[196px] bg-amber-700/30 border-2 border-dashed border-yellow-400/50 rounded-lg mb-3 flex items-center justify-center">
                 <div className="text-yellow-400/50 text-xs text-center">
                   Ante<br/>Card
                 </div>
               </div>
-              {/* Clickable betting circle for ante - Same size as other circles */}
               <button
                 onClick={handleBetClick}
                 disabled={balance < selectedChip}
@@ -151,37 +140,26 @@ const BettingPage: React.FC<BettingPageProps> = ({
               </button>
               <div className="text-yellow-300 text-xs font-semibold">Click to Bet</div>
             </div>
-
-            {/* Player Cards Row - Standard playing card dimensions */}
             <div className="flex space-x-6">
               {[1, 2, 3, 4].map((position) => (
                 <div key={position} className="flex flex-col items-center">
-                  {/* Card container with standard poker card dimensions - 5:7 aspect ratio */}
                   <div className="w-32 h-[196px] bg-amber-700/30 border-2 border-dashed border-yellow-400/50 rounded-lg mb-3 flex items-center justify-center">
-                    {/* This is where the actual card image will go */}
                     <div className="text-yellow-400/50 text-xs text-center">
                       Card<br/>Slot
                     </div>
                   </div>
-                  {/* Bet amount circle - positioned below card */}
-                  <div className="w-12 h-12 bg-amber-800/40 border-2 border-dashed border-yellow-400/50 rounded-full flex items-center justify-center">
-                    <span className="text-yellow-300 text-xs font-bold">${position}</span>
-                  </div>
-                  <div className="text-yellow-400 text-xs mt-1">Position {position}</div>
+                  <div className="text-yellow-400 text-xs mt-1"></div>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Bottom Text */}
           <div className="text-center mt-10">
             <div className="text-yellow-300 font-semibold text-lg">Place your ante bet to begin the game!</div>
           </div>
         </div>
 
-        {/* Control Panel - Centered and Stacked */}
         <div className="mt-12 flex flex-col items-center space-y-6">
-          {/* Action Buttons */}
           <div className="flex space-x-4">
             <button
               onClick={handleDealCards}
@@ -210,7 +188,6 @@ const BettingPage: React.FC<BettingPageProps> = ({
             </button>
           </div>
 
-          {/* Chip Selection */}
           <div className="flex space-x-3">
             {chipValues.map((value) => {
               const canAfford = balance >= value;

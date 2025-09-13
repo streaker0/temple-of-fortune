@@ -301,20 +301,19 @@ export const revealAndCalculate = (gameState: GameState): GameState => {
   
   if (playerBust && dealerBust) {
     gameResult = 'both-bust';
-    const totalBets = calculateTotalBets(gameState);
-    totalPayout = -totalBets / 2;
+    totalPayout = gameState.currentWager / 2;
   } else if (playerBust) {
     gameResult = 'lose';
-    totalPayout = -calculateTotalBets(gameState);
+    totalPayout = 0;
   } else if (dealerBust || finalPlayerTotal > finalDealerTotal) {
     gameResult = 'win';
     totalPayout = calculateWinnings(gameState, anteCard, playerCards);
   } else if (finalPlayerTotal === finalDealerTotal) {
     gameResult = 'tie';
-    totalPayout = 0;
+    totalPayout = gameState.currentWager;
   } else {
     gameResult = 'lose';
-    totalPayout = -calculateTotalBets(gameState);
+    totalPayout = 0;
   }
   
   return {
